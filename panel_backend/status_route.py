@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 import datetime
-from core.token_manager import get_today_cost
+from core.token_manager import get_today_tokens
 
 status_bp = Blueprint("status_bp", __name__)
 
@@ -31,3 +31,4 @@ def tokens():
         "used_tokens": used,
         "remaining_tokens": remaining
     })
+
