@@ -24,11 +24,12 @@ def tokens():
     """
     Returns real-time token usage.
     """
-    used = get_today_cost()
+    used = get_today_tokens()
     remaining = 50000 - used
 
     return jsonify({
         "used_tokens": used,
         "remaining_tokens": remaining
     })
+
 
