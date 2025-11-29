@@ -2,17 +2,15 @@ from flask import Blueprint, jsonify
 import datetime
 from core.token_manager import get_today_cost
 
-
 status_bp = Blueprint("status_bp", __name__)
-
 
 @status_bp.route("/status", methods=["GET"])
 def status():
     """
     Returns:
-      - pythonpath (for debugging)
-      - server status
-      - current server time
+    - pythonpath (for debugging)
+    - server status
+    - current server time
     """
     return jsonify({
         "pythonpath": __import__("sys").path[0],
@@ -24,13 +22,12 @@ def status():
 @status_bp.route("/tokens", methods=["GET"])
 def tokens():
     """
-    Returns real-time token usage from token_usage.json.
+    Returns real-time token usage.
     """
     used = get_today_cost()
-remaining = 50000 - used    # or whatever your limit is
+    remaining = 50000 - used
 
     return jsonify({
         "used_tokens": used,
         "remaining_tokens": remaining
     })
-
