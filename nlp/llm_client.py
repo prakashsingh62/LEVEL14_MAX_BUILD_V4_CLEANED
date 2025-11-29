@@ -1,12 +1,12 @@
 from alerts.alert_manager import alert_async
-from core.stats_collector import stats
+from core.stats_collector import increment
 from core.token_manager import update_cost, get_today_cost
 import time
 
 class LLMClient:
     def classify_email(self, text):
         try:
-            stats.increment("llm_calls")
+            increment("llm_calls")
             if "quote" in text.lower(): 
                 return "vendor_reply"
             if "follow" in text.lower(): 
@@ -14,7 +14,7 @@ class LLMClient:
             return "generic"
         except Exception as e:
             alert_async(f"🤖 LLM Classification Error: {str(e)}")
-            stats.increment("llm_errors")
+            increment("llm_errors")
             return "unknown"
 
     def extract_entities(self, text):
@@ -25,13 +25,13 @@ class LLMClient:
             return entities
         except Exception as e:
             alert_async(f"🤖 Entity Extraction Error: {str(e)}")
-            stats.increment("llm_errors")
+            increment("llm_errors")
             return {}
 
     def parse_email(self, text):
         start = time.time()
         try:
-            stats.increment("parsed_emails")
+            increment("parsed_emails")
 
             parsed = {
                 "type": self.classify_email(text),
@@ -53,5 +53,5 @@ class LLMClient:
 
         except Exception as e:
             alert_async(f"🤖 LLM Fatal Error: {str(e)}")
-            stats.increment("llm_errors")
+            increment("llm_errors")
             return {"type": "unknown", "entities": {}, "raw": text}
