@@ -16,8 +16,8 @@ class AutopilotDecisionEngine:
         # REAL TOKEN COUNT SIMULATION
         # Replace later with actual NLP token usage
         # -------------------------
-        simulated_tokens = self._estimate_tokens(email, rfq)
-        add_tokens(simulated_tokens)
+        simulated_tokens = self._estimate_token(email, rfq)
+        add_token(simulated_tokens)
 
         # -------------------------
         # Decision logic starts here
