@@ -3,7 +3,12 @@ import os
 import threading
 from datetime import datetime
 from alerts.alert_manager import alert_async
-
+stats = {
+    "parsed_emails": 0,
+    "parser_errors": 0,
+    "llm_calls": 0,
+    "llm_errors": 0
+}
 STATS_FILE = "system_stats.json"
 _lock = threading.Lock()
 
