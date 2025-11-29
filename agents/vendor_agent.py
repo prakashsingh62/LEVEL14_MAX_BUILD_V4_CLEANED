@@ -1,29 +1,20 @@
 from alerts.alert_manager import alert_async
-from core.stats_collector import stats
+from core.stats_collector import increment
+from nlp.llm_client import LLMClient
 
-class VendorAgent:
+llm = LLMClient()
 
-    def next_action(self, rfq):
-        try:
-            stats.increment("vendor_checks")
+def process_vendor_row(row):
+    try:
+        increment("vendor_checks")
 
-            days = rfq.get("last_vendor_response_days", 0)
-            rfq_id = rfq.get("id", "unknown")
+        if row.get("delay_flag"):
+            increment("vendor_delayed")
 
-            if days >= 3:
-                alert_async(f"⏳ Vendor Delay: RFQ {rfq_id} no reply for {days} days.")
-                stats.increment("vendor_delayed")
-                return {
-                    "action": "escalate",
-                    "reason": f"Vendor silent for {days} days"
-                }
+        result = llm.classify_email(row)
+        return result
 
-            return {
-                "action": "no_action",
-                "reason": "Vendor within acceptable timeline"
-            }
-
-        except Exception as e:
-            alert_async(f"🏭 VendorAgent Error: {str(e)}")
-            stats.increment("vendor_agent_errors")
-            return {"action": "no_action", "reason": "VendorAgent error"}
+    except Exception as e:
+        increment("vendor_agent_errors")
+        alert_async(f"⚠️ Vendor Agent Error: {str(e)}")
+        return {"error": str(e), "row": row}
