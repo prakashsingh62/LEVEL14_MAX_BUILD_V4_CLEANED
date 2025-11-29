@@ -1,38 +1,24 @@
 from alerts.alert_manager import alert_async
-from core.stats_collector import stats
-from core.email_engine import safe_parse
-import time
+from core.stats_collector import increment
+from core.token_manager import update_cost, get_today_cost
+from nlp.email_parser import EmailParser
+from nlp.llm_client import LLMClient
 
-class EmailAgent:
+email_parser = EmailParser()
+llm = LLMClient()
 
-    def read_and_parse(self, raw_email, sender, subject, body, attachments):
-        start = time.time()
-        try:
-            stats.increment("emails_processed")
+def process_email(message):
+    try:
+        increment("emails_processed")
 
-            parsed = safe_parse(
-                raw=raw_email,
-                sender=sender,
-                subject=subject,
-                body=body,
-                attachments=attachments
-            )
+        parsed = email_parser.parse_raw(message)
 
-            duration = time.time() - start
-            if duration > 4:
-                alert_async(f"⚠️ Slow email parsing in EmailAgent: {duration:.2f}s")
+        if parsed.get("error") or parsed.get("type") == "unknown":
+            return llm.parse_email(message)
 
-            return parsed
+        return parsed
 
-        except Exception as e:
-            alert_async(f"📩 EmailAgent Failure: {str(e)}")
-            stats.increment("email_agent_errors")
-
-            return {
-                "type": "unknown",
-                "raw": raw_email,
-                "sender": sender,
-                "subject": subject,
-                "body": body,
-                "attachments": attachments
-            }
+    except Exception as e:
+        increment("email_agent_errors")
+        alert_async(f"📩 Email Agent Error: {str(e)}")
+        return {"error": str(e), "raw": message}
