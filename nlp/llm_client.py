@@ -1,6 +1,6 @@
 from alerts.alert_manager import alert_async
 from core.stats_collector import increment
-from core.token_manager import update_cost, get_today_cost
+from core.token_manager import update_tokens, get_today_tokens
 import time
 
 class LLMClient:
