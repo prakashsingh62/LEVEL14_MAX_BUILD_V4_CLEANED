@@ -41,9 +41,8 @@ class LLMClient:
 
             cost = max(1, len(text)//50)
             update_cost(cost)
-
-            if get_today_cost() > 50:
-                alert_async(f"⚠️ High LLM cost: ₹{get_today_cost()}")
+            if get_today_tokens() > 50:
+                alert_async(f"⚠️ High LLM cost: {get_today_tokens()}")
 
             duration = time.time() - start
             if duration > 5:
