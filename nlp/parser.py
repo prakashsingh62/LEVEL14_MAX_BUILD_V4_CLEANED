@@ -1,5 +1,5 @@
 from alerts.alert_manager import alert_async
-from core.stats_collector import stats
+from core.stats_collector import increment
 from .llm_client import LLMClient
 
 class EmailParser:
@@ -7,7 +7,7 @@ class EmailParser:
         if attachments is None:
             attachments = []
         try:
-            stats.increment("parsed_emails")
+            increment("parsed_emails")
             if not body.strip():
                 alert_async("⚠️ Empty email body — LLM fallback triggered.")
                 llm = LLMClient()
@@ -28,7 +28,7 @@ class EmailParser:
             }
         except Exception as e:
             alert_async(f"🔎 Parser Error: {str(e)}")
-            stats.increment("parser_errors")
+            increment("parser_errors")
             return {
                 "sender": sender,
                 "subject": subject,
