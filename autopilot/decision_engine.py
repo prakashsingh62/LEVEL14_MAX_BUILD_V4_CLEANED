@@ -1,4 +1,4 @@
-from core.token_manager import add_tokens
+from core.token_manager import add_token
 from autopilot.action_types import ActionType
 
 
