@@ -1,20 +1,28 @@
+from core.stats_collector import increment
 from alerts.alert_manager import alert_async
-from core.stats_collector import stats
-from .llm_client import LLMClient
-import time
 
 class EmailParser:
-    def parse(self, text):
-        start = time.time()
-        client = LLMClient()
+    def parse_raw(self, message):
         try:
-            stats.increment("parsed_emails")
-            result = client.parse_email(text)
-            duration = (time.time() - start)
-            if duration > 5:
-                alert_async(f"⚠️ Slow email parsing: {duration:.2f}s")
-            return result
+            increment("parsed_emails")
+
+            # Example parsing logic
+            body = message.get("body", "")
+            subject = message.get("subject", "")
+            sender = message.get("from", "")
+
+            if not body.strip():
+                increment("parser_errors")
+                return {"type": "unknown", "body": body}
+
+            return {
+                "type": "parsed",
+                "sender": sender,
+                "subject": subject,
+                "body": body
+            }
+
         except Exception as e:
-            alert_async(f"🔎 Email Parse Error: {str(e)}")
-            stats.increment("parser_errors")
-            return {"type": "unknown", "entities": {}, "raw": text}
+            increment("parser_errors")
+            alert_async(f"❌ EmailParser Error: {str(e)}")
+            return {"error": str(e), "raw": message}
