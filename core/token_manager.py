@@ -1,34 +1,46 @@
 import json
 import os
-from core.stats_collector import increment
-from alerts.alert_manager import alert_async
+import threading
+from datetime import datetime
 
 TOKEN_FILE = "token_usage.json"
+_lock = threading.Lock()
 
-def _read():
+
+def _load_tokens():
     if not os.path.exists(TOKEN_FILE):
-        return {"today": 0}
+        return {"date": datetime.now().strftime("%Y-%m-%d"), "used": 0}
+
     try:
-        return json.load(open(TOKEN_FILE))
+        with open(TOKEN_FILE, "r") as f:
+            return json.load(f)
     except:
-        return {"today": 0}
+        return {"date": datetime.now().strftime("%Y-%m-%d"), "used": 0}
 
-def _write(data):
+
+def _save_tokens(data):
     with open(TOKEN_FILE, "w") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=4)
 
-def update_cost(amount):
-    try:
-        data = _read()
-        data["today"] = data.get("today", 0) + amount
-        _write(data)
-        increment("llm_cost_updates")
-    except Exception as e:
-        alert_async(f"❌ TokenManager Error: {str(e)}")
+
+def add_tokens(amount):
+    """Increase token usage by amount."""
+    with _lock:
+        data = _load_tokens()
+
+        # Reset daily limit if date changed
+        today = datetime.now().strftime("%Y-%m-%d")
+        if data.get("date") != today:
+            data = {"date": today, "used": 0}
+
+        data["used"] = max(0, data.get("used", 0) + amount)
+        _save_tokens(data)
+
 
 def get_today_cost():
-    try:
-        data = _read()
-        return data.get("today", 0)
-    except:
+    """Return tokens used today."""
+    data = _load_tokens()
+    today = datetime.now().strftime("%Y-%m-%d")
+    if data.get("date") != today:
         return 0
+    return data.get("used", 0)
