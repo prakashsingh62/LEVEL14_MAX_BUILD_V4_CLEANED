@@ -1,4 +1,4 @@
-from core.token_manager import add_token_usage
+from core.token_manager import add_tokens
 from autopilot.action_types import ActionType
 
 
@@ -17,7 +17,7 @@ class AutopilotDecisionEngine:
         # Replace later with actual NLP token usage
         # -------------------------
         simulated_tokens = self._estimate_tokens(email, rfq)
-        add_token_usage(simulated_tokens)
+        add_tokens(simulated_tokens)
 
         # -------------------------
         # Decision logic starts here
