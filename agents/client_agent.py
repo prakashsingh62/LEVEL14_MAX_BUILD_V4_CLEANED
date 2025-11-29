@@ -1,30 +1,22 @@
 from alerts.alert_manager import alert_async
-from core.stats_collector import stats
+from core.stats_collector import increment
+from core.token_manager import update_cost, get_today_cost
+from nlp.llm_client import LLMClient
 
-class ClientAgent:
+llm = LLMClient()
 
-    def next_action(self, rfq):
-        try:
-            stats.increment("client_checks")
+def process_client_row(row):
+    try:
+        increment("client_checks")
 
-            rfq_id = rfq.get("id", "unknown")
-            status = rfq.get("status", "")
-            days = rfq.get("client_pending_days", 0)
+        if row.get("status") == "PENDING":
+            increment("client_pending")
 
-            if status == "awaiting_client" and days >= 2:
-                alert_async(f"👤 Client Pending: RFQ {rfq_id} awaiting approval for {days} days.")
-                stats.increment("client_pending")
-                return {
-                    "action": "remind_client",
-                    "reason": "Client pending 2+ days"
-                }
+        # LLM classification
+        result = llm.classify_email(row)
+        return result
 
-            return {
-                "action": "no_action",
-                "reason": "No client action required"
-            }
-
-        except Exception as e:
-            alert_async(f"👤 ClientAgent Error: {str(e)}")
-            stats.increment("client_agent_errors")
-            return {"action": "no_action", "reason": "ClientAgent error"}
+    except Exception as e:
+        increment("client_agent_errors")
+        alert_async(f"❌ Client Agent Error: {str(e)}")
+        return {"error": str(e), "row": row}
