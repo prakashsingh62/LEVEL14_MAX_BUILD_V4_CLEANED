@@ -6,41 +6,49 @@ from datetime import datetime
 TOKEN_FILE = "token_usage.json"
 _lock = threading.Lock()
 
+def _default_data():
+    return {
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "used_tokens": 0
+    }
 
-def _load_tokens():
+def _load():
     if not os.path.exists(TOKEN_FILE):
-        return {"date": datetime.now().strftime("%Y-%m-%d"), "used": 0}
+        return _default_data()
 
     try:
         with open(TOKEN_FILE, "r") as f:
             return json.load(f)
     except:
-        return {"date": datetime.now().strftime("%Y-%m-%d"), "used": 0}
+        return _default_data()
 
-
-def _save_tokens(data):
+def _save(data):
     with open(TOKEN_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=2)
 
-
-def add_tokens(amount):
-    """Increase token usage by amount."""
-    with _lock:
-        data = _load_tokens()
-
-        # Reset daily limit if date changed
-        today = datetime.now().strftime("%Y-%m-%d")
-        if data.get("date") != today:
-            data = {"date": today, "used": 0}
-
-        data["used"] = max(0, data.get("used", 0) + amount)
-        _save_tokens(data)
-
-
-def get_today_cost():
-    """Return tokens used today."""
-    data = _load_tokens()
+def _reset_if_new_day(data):
     today = datetime.now().strftime("%Y-%m-%d")
-    if data.get("date") != today:
-        return 0
-    return data.get("used", 0)
+    if data["date"] != today:
+        data["date"] = today
+        data["used_tokens"] = 0
+    return data
+
+# ------------------------------------------------------
+# PUBLIC FUNCTIONS (USE THESE)
+# ------------------------------------------------------
+
+def update_tokens(amount: int):
+    """Add tokens used today."""
+    with _lock:
+        data = _load()
+        data = _reset_if_new_day(data)
+
+        data["used_tokens"] += amount
+        _save(data)
+
+def get_today_tokens() -> int:
+    """Return total tokens used today."""
+    with _lock:
+        data = _load()
+        data = _reset_if_new_day(data)
+        return data["used_tokens"]
