@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify
 import datetime
-from core.token_manager import get_token_usage
+from core.token_manager import get_today_cost
 
 
 status_bp = Blueprint("status_bp", __name__)
@@ -26,9 +26,11 @@ def tokens():
     """
     Returns real-time token usage from token_usage.json.
     """
-    used, remaining = get_token_usage()
+    used = get_today_cost()
+remaining = 50000 - used    # or whatever your limit is
 
     return jsonify({
         "used_tokens": used,
         "remaining_tokens": remaining
     })
+
